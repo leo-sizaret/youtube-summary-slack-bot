@@ -185,8 +185,10 @@ def handle_mention(event, say):
         else:
             say(f":{get_random_pepe_emoji()}: summarizing <{video_url}|your video>...", thread_ts=thread_ts)
         
+        # Get transcript
+        transcript = YouTubeTranscriptApi.get_transcript(youtube_id, proxies={})
+        
         # Process transcript with timestamps
-        transcript = YouTubeTranscriptApi.get_transcript(youtube_id)
         segments_info = process_transcript_with_timestamps(transcript)
         full_text = ' '.join(entry['text'] for entry in transcript)        
             
