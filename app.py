@@ -212,9 +212,6 @@ def handle_mention(event, say):
             say(f"<@{user_id}> {formatted_summary}", thread_ts=thread_ts)
         
     # Error handling
-    except TranscriptsDisabled:
-        logger.error(f"This video doesn't have captions.", exc_info=True)
-        say(f"This video doesn't have captions.")
     except NoTranscriptFound:
         logger.error(f"Couldn't find English captions for this video.", exc_info=True)
         say(f"Couldn't find English captions for this video.")
