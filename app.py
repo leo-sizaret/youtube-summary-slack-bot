@@ -187,7 +187,7 @@ def handle_mention(event, say):
         
         # Get transcript
         transcript = YouTubeTranscriptApi.get_transcript(youtube_id, proxies={
-            "https": "https://os.environ['PROXY_USERNAME']:os.environ['PROXY_PASSWORD']@gate.smartproxy.com:10001"
+            "https": f"https://{os.environ['PROXY_USERNAME']}:{os.environ['PROXY_PASSWORD']}@{os.environ['PROXY_DOMAIN']}:{os.environ['PROXY_PORT']}"
             })
         
         # Process transcript with timestamps
