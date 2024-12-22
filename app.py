@@ -186,7 +186,9 @@ def handle_mention(event, say):
             say(f":{get_random_pepe_emoji()}: summarizing <{video_url}|your video>...", thread_ts=thread_ts)
         
         # Get transcript
-        transcript = YouTubeTranscriptApi.get_transcript(youtube_id, proxies={})
+        transcript = YouTubeTranscriptApi.get_transcript(youtube_id, proxies={
+            "https": "https://os.environ['PROXY_USERNAME']:os.environ['PROXY_PASSWORD']@gate.smartproxy.com:10001"
+            })
         
         # Process transcript with timestamps
         segments_info = process_transcript_with_timestamps(transcript)
