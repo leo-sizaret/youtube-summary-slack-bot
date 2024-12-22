@@ -19,10 +19,6 @@ import logging
 MODEL_NAME = "claude-3-5-sonnet-20241022"
 MAX_TOKENS = 1024
 SEGMENT_INTERVAL = 120  # 2 minutes in seconds
-PROXY_USERNAME = os.environ['PROXY_USERNAME']
-PROXY_PASSWORD = os.environ['PROXY_PASSWORD']
-PROXY_DOMAIN = os.environ['PROXY_DOMAIN']
-PROXY_PORT = os.environ['PROXY_PORT']
 
 # Load environment variables
 load_dotenv()
@@ -37,6 +33,11 @@ logger = logging.getLogger(__name__)
 model = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 # Initialize Slack app
 app = App(token=os.environ["SLACK_BOT_TOKEN"])
+# Load proxy credentials
+PROXY_USERNAME = os.environ['PROXY_USERNAME']
+PROXY_PASSWORD = os.environ['PROXY_PASSWORD']
+PROXY_DOMAIN = os.environ['PROXY_DOMAIN']
+PROXY_PORT = os.environ['PROXY_PORT']
 
 
 def extract_youtube_id(url) -> str|None:
