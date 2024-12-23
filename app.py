@@ -215,7 +215,7 @@ def handle_mention(event, say):
         
         if thread_ts is None:
             # TODO: get title
-            thread_msg = say(f"<@{user_id}> {get_random_pepe_emoji()} your video is summarized, see the thread.")
+            thread_msg = say(f"<@{user_id}> :{get_random_pepe_emoji()}: <{video_url}|your video> is summarized, see the thread.")
             thread_msg_ts = thread_msg['ts']
             say(f"{formatted_summary}", thread_ts=thread_msg_ts)
         else:
