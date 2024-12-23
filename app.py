@@ -5,7 +5,6 @@ import random
 from youtube_transcript_api import (
     YouTubeTranscriptApi,
     NoTranscriptFound,
-    TranscriptsDisabled,
     VideoUnavailable,
     NoTranscriptAvailable
     )
@@ -184,11 +183,10 @@ def handle_mention(event, say):
     
     
     try:
-        
         if thread_ts is None:
-            say(f":{get_random_pepe_emoji()}: summarizing <{video_url}|your video>...")
+            progress_msg = say(f":{get_random_pepe_emoji()}: summarizing <{video_url}|your video>...")
         else:
-            say(f":{get_random_pepe_emoji()}: summarizing <{video_url}|your video>...", thread_ts=thread_ts)
+            progress_msg = say(f":{get_random_pepe_emoji()}: summarizing <{video_url}|your video>...", thread_ts=thread_ts)
         
         # Get transcript
         transcript = YouTubeTranscriptApi.get_transcript(youtube_id, proxies={
@@ -216,9 +214,17 @@ def handle_mention(event, say):
         formatted_summary = format_for_slack(message.content[0].text)
         
         if thread_ts is None:
-            say(f"<@{user_id}> {formatted_summary}")
+            # TODO: get title
+            thread_msg = say(f"<@{user_id}> {get_random_pepe_emoji()} your video is summarized, see the thread.")
+            summary_msg = say(f"{formatted_summary}", thread_ts=thread_msg['ts'])
         else:
             say(f"<@{user_id}> {formatted_summary}", thread_ts=thread_ts)
+            
+        # Delete the progress message
+        app.client.chat_delete(
+            channel=event['channel'],
+            ts=progress_msg['ts']
+        )
         
     # Error handling
     except NoTranscriptFound:
@@ -239,6 +245,3 @@ if __name__ == "__main__":
     logger.info("Starting YouTube Summary Bot...")
     handler = SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"])
     handler.start()
-    
-    
-    
