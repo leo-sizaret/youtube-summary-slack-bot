@@ -6,7 +6,7 @@ from youtube_transcript_api import (
     VideoUnavailable,
     NoTranscriptAvailable,
 )
-from pytube import YouTube
+import yt_dlp
 from anthropic import Anthropic
 
 from urllib.parse import urlparse, parse_qs
@@ -168,8 +168,9 @@ def get_url(elements) -> str:
 
 def get_video_title(url) -> str:
     try:
-        yt = YouTube(url)
-        return yt.title
+        ydl = yt_dlp.YoutubeDL({"quiet": True})
+        info = ydl.extract_info(url, download=False)
+        return info["title"]
     except Exception as e:
         return f"Error: {str(e)}"
 

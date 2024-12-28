@@ -1,5 +1,5 @@
 slack-bolt
 youtube-transcript-api
-pytube
+yt_dlp
 anthropic
 python-dotenv
