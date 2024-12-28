@@ -6,7 +6,6 @@ from youtube_transcript_api import (
     VideoUnavailable,
     NoTranscriptAvailable,
 )
-import yt_dlp
 from anthropic import Anthropic
 
 from urllib.parse import urlparse, parse_qs
@@ -14,6 +13,10 @@ from dotenv import load_dotenv
 import os
 import random
 import logging
+
+import urllib
+import urllib.request
+import json
 
 from prompts import prompts
 
@@ -166,13 +169,22 @@ def get_url(elements) -> str:
     return None  # Return None if no URL was found in this level
 
 
-def get_video_title(url) -> str:
+def get_video_title(video_id) -> str:
+    
+    params = {"format": "json", "url": "https://www.youtube.com/watch?v=%s" % video_id}
+    url = "https://www.youtube.com/oembed"
+    query_string = urllib.parse.urlencode(params)
+    url = url + "?" + query_string
+
     try:
-        ydl = yt_dlp.YoutubeDL({"quiet": True})
-        info = ydl.extract_info(url, download=False)
-        return info["title"]
+        with urllib.request.urlopen(url) as response:
+            response_text = response.read()
+            data = json.loads(response_text.decode())
+            return data['title']
     except Exception as e:
-        return f"Error: {str(e)}"
+        print(f"Couldn't get video title, full error: {e}")
+
+    
 
 
 def get_video_url_from_slack_event(event) -> str:
@@ -234,7 +246,7 @@ def handle_mention(event, say):
         )
 
         # Get video title
-        title = get_video_title(video_url)
+        title = get_video_title(youtube_id)
 
         # Process transcript with timestamps
         segments_info = process_transcript_with_timestamps(transcript)
