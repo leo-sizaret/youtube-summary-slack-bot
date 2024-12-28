@@ -185,9 +185,9 @@ def get_video_url_from_slack_event(event) -> str:
 
     if video_url:
         logger.info(f"URL found: {video_url}")
-    
+
     return video_url
-        
+
 
 @app.event("app_mention")
 def handle_mention(event, say):
@@ -232,6 +232,9 @@ def handle_mention(event, say):
             },
         )
 
+        # Get video title
+        title = get_video_title(video_url)
+
         # Process transcript with timestamps
         segments_info = process_transcript_with_timestamps(transcript)
         full_text = " ".join(entry["text"] for entry in transcript)
@@ -255,12 +258,13 @@ def handle_mention(event, say):
         formatted_summary = format_for_slack(message.content[0].text)
 
         if thread_ts is None:
-            # TODO: get title
             thread_msg = say(
-                f"<@{user_id}> :{get_random_pepe_emoji()}: <{video_url}|your video> is summarized, see the thread."
+                f"<@{user_id}> :{get_random_pepe_emoji()}: summarized <{video_url}|{title}>, see the thread."
             )
             thread_msg_ts = thread_msg["ts"]
-            say(f"{formatted_summary}", thread_ts=thread_msg_ts)
+            say(
+                f"<{video_url}|{title}> \n {formatted_summary}", thread_ts=thread_msg_ts
+            )
         else:
             say(f"<@{user_id}> {formatted_summary}", thread_ts=thread_ts)
 
