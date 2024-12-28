@@ -189,7 +189,7 @@ def handle_mention(event, say):
             progress_msg = say(f":{get_random_pepe_emoji()}: summarizing <{video_url}|your video>...", thread_ts=thread_ts)
         
         # Get transcript
-        transcript = YouTubeTranscriptApi.get_transcript(youtube_id, proxies={
+        transcript = YouTubeTranscriptApi.get_transcript(youtube_id, languages=('en', 'ru'), proxies={
             "https": f"https://{PROXY_USERNAME}:{PROXY_PASSWORD}@{PROXY_DOMAIN}:{PROXY_PORT}"
             })
         
