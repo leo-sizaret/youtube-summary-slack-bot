@@ -210,6 +210,8 @@ def handle_mention(event, say):
                 }]
         )
         
+        logger.info("Sent transcript to LLM")
+        
         # Send summary message and save its timestamp
         formatted_summary = format_for_slack(message.content[0].text)
         
