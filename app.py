@@ -170,7 +170,7 @@ def get_url(elements) -> str:
 
 
 def get_video_title(video_id) -> str:
-    
+
     params = {"format": "json", "url": "https://www.youtube.com/watch?v=%s" % video_id}
     url = "https://www.youtube.com/oembed"
     query_string = urllib.parse.urlencode(params)
@@ -180,11 +180,9 @@ def get_video_title(video_id) -> str:
         with urllib.request.urlopen(url) as response:
             response_text = response.read()
             data = json.loads(response_text.decode())
-            return data['title']
+            return data["title"]
     except Exception as e:
         print(f"Couldn't get video title, full error: {e}")
-
-    
 
 
 def get_video_url_from_slack_event(event) -> str:

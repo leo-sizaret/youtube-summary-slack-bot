@@ -21,12 +21,6 @@ prompts = [
     Each major point should be bolded using * and sub-points should have - bullets
     The casing should be sentence case, like this: "*Major point*"
 
-    *Implications for StarkWare*
-    Analyze any implications for StarkWare based on the discussion. Consider:
-    - Impact on L2 scaling solutions
-    - Relevance to StarkWare's technology and value proposition
-    - Potential strategic considerations
-
     Be intelligent about the implciations. If there are no clear implications, simply state "No direct implications for StarkWare from this discussion."
 
     Keep the language conversational but substantive. Help readers understand both what the speakers think AND why they think it.
@@ -64,8 +58,6 @@ prompts = [
     - They suggest this could shift value toward community and brand-driven projects, as technical barriers become less relevant. 
     - This challenges the common assumption that technical sophistication equals value in crypto.
 
-    *Implications for StarkWare*
-    ...
     '''
     """
 ]
