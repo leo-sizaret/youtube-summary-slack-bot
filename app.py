@@ -4,10 +4,10 @@ from youtube_transcript_api import (
     YouTubeTranscriptApi,
     NoTranscriptFound,
     VideoUnavailable,
-    NoTranscriptAvailable,
+    FetchedTranscript,
 )
+from youtube_transcript_api.proxies import GenericProxyConfig
 from anthropic import Anthropic
-
 from urllib.parse import urlparse, parse_qs
 from dotenv import load_dotenv
 import os
@@ -21,7 +21,7 @@ import json
 from prompts import prompts
 
 
-MODEL_NAME = "claude-3-5-sonnet-20241022"
+MODEL_NAME = "claude-opus-4-20250514"
 MAX_TOKENS = 1024
 SEGMENT_INTERVAL = 120  # 2 minutes in seconds
 
@@ -110,7 +110,7 @@ def get_random_pepe_emoji() -> str:
     return random.choice(pepe_emojis)
 
 
-def process_transcript_with_timestamps(transcript) -> str:
+def process_transcript_with_timestamps(transcript: FetchedTranscript) -> str:
     def format_timestamp(seconds):
         minutes = int(seconds / 60)
         seconds = int(seconds % 60)
@@ -121,10 +121,10 @@ def process_transcript_with_timestamps(transcript) -> str:
     current_text = []
     last_timestamp = 0
 
-    for entry in transcript:
-        current_text.append(entry["text"])
+    for entry in transcript.snippets:
+        current_text.append(entry.text)
         if (
-            entry["start"] - last_timestamp > SEGMENT_INTERVAL
+            entry.start - last_timestamp > SEGMENT_INTERVAL
         ):  # New segment every 2 minutes
             segments.append(
                 {
@@ -133,7 +133,7 @@ def process_transcript_with_timestamps(transcript) -> str:
                 }
             )
             current_text = []
-            last_timestamp = entry["start"]
+            last_timestamp = entry.start
 
     # Add the last segment
     if current_text:
@@ -170,7 +170,7 @@ def get_url(elements) -> str:
 
 
 def get_video_title(video_id) -> str:
-    
+
     params = {"format": "json", "url": "https://www.youtube.com/watch?v=%s" % video_id}
     url = "https://www.youtube.com/oembed"
     query_string = urllib.parse.urlencode(params)
@@ -180,11 +180,9 @@ def get_video_title(video_id) -> str:
         with urllib.request.urlopen(url) as response:
             response_text = response.read()
             data = json.loads(response_text.decode())
-            return data['title']
+            return data["title"]
     except Exception as e:
         print(f"Couldn't get video title, full error: {e}")
-
-    
 
 
 def get_video_url_from_slack_event(event) -> str:
@@ -201,6 +199,36 @@ def get_video_url_from_slack_event(event) -> str:
 
     return video_url
 
+
+def get_transcript(youtube_id: str) -> FetchedTranscript:
+    ytt_api = YouTubeTranscriptApi(
+        proxy_config=GenericProxyConfig(
+            http_url=f"http://{PROXY_USERNAME}:{PROXY_PASSWORD}@{PROXY_DOMAIN}:{PROXY_PORT}",
+            https_url=f"https://{PROXY_USERNAME}:{PROXY_PASSWORD}@{PROXY_DOMAIN}:{PROXY_PORT}",
+        )
+    )
+    return ytt_api.fetch(youtube_id)
+
+
+def invoke_llm_to_get_summary(transcript: FetchedTranscript):
+    segments_info = process_transcript_with_timestamps(transcript)
+    full_text = " ".join(entry.text for entry in transcript.snippets)
+
+    message = model.messages.create(
+        model=MODEL_NAME,
+        max_tokens=MAX_TOKENS,
+        messages=[
+            {
+                "role": "user",
+                "content": f"""
+                {prompts[0]}\n\n
+                Use these timestamps as reference points: {segments_info}\n\n
+                Transcript: {full_text}""",
+            }
+        ],
+    )
+
+    return message
 
 @app.event("app_mention")
 def handle_mention(event, say):
@@ -237,35 +265,13 @@ def handle_mention(event, say):
             )
 
         # Get transcript
-        transcript = YouTubeTranscriptApi.get_transcript(
-            youtube_id,
-            languages=["en", "ru"],
-            proxies={
-                "https": f"https://{PROXY_USERNAME}:{PROXY_PASSWORD}@{PROXY_DOMAIN}:{PROXY_PORT}"
-            },
-        )
+        transcript = get_transcript(youtube_id)
 
         # Get video title
         title = get_video_title(youtube_id)
 
-        # Process transcript with timestamps
-        segments_info = process_transcript_with_timestamps(transcript)
-        full_text = " ".join(entry["text"] for entry in transcript)
-
-        # Get summary from Claude
-        message = model.messages.create(
-            model=MODEL_NAME,
-            max_tokens=MAX_TOKENS,
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"""
-                 {prompts[0]}\n\n
-                 Use these timestamps as reference points: {segments_info}\n\n
-                 Transcript: {full_text}""",
-                }
-            ],
-        )
+        # Process transcript with timestamps, get summary from LLM
+        message = invoke_llm_to_get_summary(transcript)
 
         # Send summary message and save its timestamp
         formatted_summary = format_for_slack(message.content[0].text)
@@ -293,9 +299,6 @@ def handle_mention(event, say):
             f"This video is unavailable. It might be private or deleted.", exc_info=True
         )
         say(f"This video is unavailable. It might be private or deleted.")
-    except NoTranscriptAvailable:
-        logger.error(f"No transcript is available for this video.", exc_info=True)
-        say(f"No transcript is available for this video.")
     except Exception as e:
         logger.error(f"Error processing video: {str(e)}", exc_info=True)
         say(f"An unexpected error occurred: {str(e)}")
